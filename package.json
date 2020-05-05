@@ -1,0 +1,29 @@
+{
+  "name": "memcached",
+  "version": "1.0.0",
+  "description": "my own version of memcached server side",
+  "bin": {
+    "memcached": "bin/memcached"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R list"
+  },
+  "keywords": [
+    "memcached",
+    "nodejs"
+  ],
+  "author": "Cristian Rengifo",
+  "license": "ISC",
+  "dependencies": {
+    "arg": "^4.1.3",
+    "chai": "^4.2.0",
+    "esm": "^3.2.25",
+    "inquirer": "^7.1.0",
+    "js-sizeof": "0.0.1",
+    "mocha": "^7.1.2"
+  }
+}
