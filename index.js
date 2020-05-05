@@ -1,7 +1,7 @@
 const net = require("net");
 const arg = require("arg");
 const MemoryCached = require("./src/index");
-
+const shortid = require('shortid');
 
 const parseArgumentsIntoOptions = (rawArgs) => {
   const args = arg({
@@ -15,7 +15,7 @@ const parseArgumentsIntoOptions = (rawArgs) => {
       }
   );
   return {
-      port: args['--port'] || false,
+      port: args['--port'] || 11211,
       help: args['--help'] || false
   };
 }
@@ -25,6 +25,7 @@ export function cli(args) {
   let options = parseArgumentsIntoOptions(args);
 
   // Create and return a net.Server object, the function will be invoked when client connect to this server.
+
   let server = net.createServer(function (client) {
     console.log(
       "Client connect. Client local address : " +
@@ -36,10 +37,9 @@ export function cli(args) {
         ":" +
         client.remotePort
     );
-  
+    
     client.setEncoding("utf-8");
-    client.setTimeout(1000);
-  
+
     let user_state = "reading_header";
     let buffer = "";
     let header = "";
@@ -59,12 +59,6 @@ export function cli(args) {
   
       // we may got some data to handle
       client.emit("user_event");
-      client.end(
-        "Server received data : " +
-          data +
-          ", send back to client data size : " +
-          client.bytesWritten
-      );
     });
   
     // When user_event is listened
@@ -92,7 +86,9 @@ export function cli(args) {
             body = buffer.slice(0, expectBodyLen - CRLF_LEN);
             buffer = buffer.slice(expectBodyLen);
             user_state = "reading_header";
-            console.warn(header, body);
+            // adds id to the client
+            client.id = client.localAddress + ":" + client.localPort;
+            console.log("client ID =>",client.id);
             handleBody(client, header, body, function () {
               if (buffer.length > 0) {
                 client.emit("user_event");
@@ -126,10 +122,6 @@ export function cli(args) {
   // Make the server a TCP server listening on port 9999.
   serverListening(server, options.port);
 }
-
-
-
-
 
 function serverListening(server, port) {
   console.log(`port: ${port}`);
@@ -186,6 +178,7 @@ function handleBody(socket, header, body, call_back) {
   let tup = header.split(" ");
   let key = "";
   let flag = "";
+  let id = null;
   let lifeTime = null;
   switch (tup[0]) {
     case "get":
@@ -280,7 +273,9 @@ function handleBody(socket, header, body, call_back) {
       key = tup[1];
       flag = tup[2];
       lifeTime = tup[3];
-
+      lifeTime = tup[3];
+      id = tup[5];
+      cliendId = socket.id;
       try {
         MemoryCached.cas(key, body, lifeTime, flag, id, cliendId);
         response = `STORED\r\n`;
